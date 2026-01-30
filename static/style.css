@@ -1,0 +1,53 @@
+/* ======================================================
+   E-Ration Project – Base Styles (REFERENCE ONLY)
+   ------------------------------------------------------
+   This file is intentionally minimal.
+   Main UI styles are inside HTML files.
+   Use this file for future common styles if needed.
+   ====================================================== */
+
+/* ---- CSS Reset (safe) ---- */
+* {
+  box-sizing: border-box;
+}
+
+/* ---- Body fallback (HTML inline styles will override) ---- */
+body {
+  margin: 0;
+  padding: 0;
+  background: #f9faff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ---- Utility classes (optional use later) ---- */
+.text-center {
+  text-align: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---- Buttons fallback (HTML styles override this) ---- */
+button {
+  cursor: pointer;
+}
+
+/* ---- Inputs fallback ---- */
+input,
+select {
+  font-family: inherit;
+}
+
+/* ---- Link reset ---- */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ======================================================
+   NOTE:
+   All main UI styling is handled inside HTML <style> tags.
+   This file exists only as a placeholder / reference.
+   ====================================================== */

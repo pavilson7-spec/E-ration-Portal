@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Ration | Dealer Management</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    body{ background:#f5f7fb; }
+
+    /* Sidebar like Stock Monitoring */
+    .sidebar{
+      width:260px; min-height:100vh;
+      background:#fff;
+      border-right:1px solid #e8ebf2;
+      position:sticky; top:0;
+    }
+    .brand{
+      background:#0d6efd;
+      color:#fff;
+      font-weight:700;
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .brand i{ font-size:18px; }
+    .nav-link{
+      color:#344054; border-radius:10px;
+      padding:10px 12px; margin-bottom:6px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .nav-link.active, .nav-link:hover{
+      background:#eef2ff; color:#1d4ed8;
+    }
+
+    .content-wrap{ padding:22px; width:100%; }
+
+    .card-soft{
+      border: 1px solid #e8ebf2;
+      border-radius: 16px;
+      background:#fff;
+      box-shadow: 0 10px 30px rgba(16,24,40,0.06);
+    }
+
+    .page-title{ font-weight:700; margin:0; }
+    .sub-title{ color:#667085; font-size:13px; }
+
+    .table thead th{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      color:#667085;
+      background:#f8fafc;
+    }
+
+    .pill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:600;
+      border:1px solid transparent;
+    }
+    .pill-success{ background:#ecfdf3; color:#027a48; border-color:#abefc6; }
+    .pill-warning{ background:#fffaeb; color:#b54708; border-color:#fedf89; }
+    .pill-danger{ background:#fef3f2; color:#b42318; border-color:#fecdca; }
+    .pill-soft{ background:#eef2ff; color:#1d4ed8; border-color:#dbeafe; }
+
+    .btn-soft{
+      border-radius:10px;
+      padding:8px 12px;
+    }
+
+    .scroll-box{ max-height: 520px; overflow:auto; }
+  </style>
+</head>
+
+<body>
+  <div class="d-flex">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <i class="bi bi-person-badge"></i>
+        <span>E-Ration Admin</span>
+      </div>
+
+      <div class="p-3">
+        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <a class="nav-link active" href="#">
+          <i class="bi bi-shop"></i>
+          <span>Dealer Management</span>
+        </a>
+
+        <!-- Keep routes safe: only logout if already exists in project -->
+        <a class="nav-link" href="{{ url_for('logout') }}">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="content-wrap">
+
+      <!-- Header like stock monitoring -->
+      <div class="d-flex align-items-start justify-content-between mb-3">
+        <div>
+          <h3 class="page-title">Dealer Management</h3>
+          <div class="sub-title">Approve / Reject newly registered dealers (latest list)</div>
+        </div>
+
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-soft">
+          <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card-soft p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="fw-bold">All Dealers</div>
+          <span class="pill pill-warning">
+            <i class="bi bi-hourglass-split me-1"></i> Pending: {{ pending_count }}
+          </span>
+        </div>
+
+        <div class="table-responsive scroll-box">
+          <table class="table table-sm align-middle table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="width:10%">ID</th>
+                <th style="width:15%">Code</th>
+                <th style="width:25%">Shop</th>
+                <th style="width:18%">Area</th>
+                <th style="width:14%">Status</th>
+                <th style="width:18%" class="text-end">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+            {% if dealers|length == 0 %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  <i class="bi bi-info-circle me-1"></i> No dealers found
+                </td>
+              </tr>
+            {% else %}
+              {% for d in dealers %}
+              <tr>
+                <td class="text-muted">#{{ d.id }}</td>
+
+                <td>
+                  <span class="pill pill-soft">{{ d.code }}</span>
+                </td>
+
+                <td class="fw-semibold">{{ d.shop_name }}</td>
+
+                <td>{{ d.area if d.area else '-' }}</td>
+
+                <td>
+                  {% if d.status == 'Approved' %}
+                    <span class="pill pill-success">Approved</span>
+                  {% elif d.status == 'Rejected' %}
+                    <span class="pill pill-danger">Rejected</span>
+                  {% else %}
+                    <span class="pill pill-warning">Pending</span>
+                  {% endif %}
+                </td>
+
+                <td class="text-end">
+                  {% if d.status == 'Pending' %}
+                    <form method="POST" action="{{ url_for('admin_approve_dealer', did=d.id) }}" class="d-inline">
+                      <button class="btn btn-sm btn-success btn-soft" type="submit">
+                        <i class="bi bi-check2-circle me-1"></i>Approve
+                      </button>
+                    </form>
+
+                    <form method="POST" action="{{ url_for('admin_reject_dealer', did=d.id) }}" class="d-inline">
+                      <button class="btn btn-sm btn-outline-danger btn-soft" type="submit">
+                        <i class="bi bi-x-circle me-1"></i>Reject
+                      </button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted small">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

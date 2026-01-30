@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin | {{ t.transaction_history if t and t.transaction_history else "Transaction History" }}</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    body{ background:#f5f7fb; }
+
+    /* --- Sidebar (same admin look) --- */
+    .sidebar{
+      width:270px; min-height:100vh;
+      background:#fff;
+      border-right:1px solid #e8ebf2;
+      position:sticky; top:0;
+    }
+    .brand{
+      background:#0b5ed7;
+      color:#fff;
+      padding:14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.15);
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .sidebar .nav-link{
+      color:#344054; border-radius:10px;
+      padding:10px 12px; margin-bottom:6px;
+      display:flex; gap:10px; align-items:center;
+    }
+    .sidebar .nav-link.active, .sidebar .nav-link:hover{
+      background:#eef2ff; color:#1d4ed8;
+    }
+
+    /* --- Main area --- */
+    .content{
+      padding:22px;
+    }
+    .page-head{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin-bottom:14px;
+    }
+    .page-title{
+      font-size:18px; font-weight:700; margin:0;
+      color:#101828;
+    }
+    .card{
+      border:1px solid #e8ebf2;
+      border-radius:14px;
+      box-shadow:0 6px 18px rgba(16,24,40,.06);
+    }
+    .table thead th{
+      white-space:nowrap;
+    }
+    .btn-round{ border-radius:10px; }
+  </style>
+</head>
+
+<body>
+
+<div class="d-flex">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      {{ t.e_ration_admin if t and t.e_ration_admin else "E-Ration | Admin" }}
+    </div>
+
+    <nav class="p-3">
+      <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+        <i class="bi bi-speedometer2"></i>
+        {{ t.dashboard if t and t.dashboard else "Dashboard" }}
+      </a>
+
+      <!-- Active Page -->
+      <a class="nav-link active" href="{{ url_for('admin_transactions') }}">
+
+        <i class="bi bi-receipt"></i>
+        {{ t.transaction_history if t and t.transaction_history else "Transaction History" }}
+      </a>
+
+      <a class="nav-link" href="{{ url_for('logout') }}">
+        <i class="bi bi-box-arrow-right"></i>
+        {{ t.logout if t and t.logout else "Logout" }}
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Content -->
+  <main class="flex-grow-1 content">
+
+    <div class="page-head">
+      <h1 class="page-title">
+        {{ t.transaction_history if t and t.transaction_history else "Transaction History" }}
+      </h1>
+
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm btn-round">
+          <i class="bi bi-arrow-left"></i>
+          {{ t.back if t and t.back else "Back" }}
+        </a>
+
+        <a class="btn btn-primary w-100" href="{{ url_for('logout') }}">
+          <i class="bi bi-box-arrow-right"></i>
+          {{ t.logout if t and t.logout else "Logout" }}
+        </a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+
+        {% if txns|length == 0 %}
+          <div class="alert alert-info mb-0">
+            {{ t.no_transactions_found if t and t.no_transactions_found else "No transactions found." }}
+          </div>
+        {% else %}
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:70px;">{{ t.id if t and t.id else "ID" }}</th>
+                  <th>{{ t.user_code if t and t.user_code else "User Code" }}</th>
+                  <th>{{ t.item if t and t.item else "Item" }}</th>
+                  <th>{{ t.quantity if t and t.quantity else "Quantity" }}</th>
+                  <th>{{ t.date_time if t and t.date_time else "Date & Time" }}</th>
+                  <th>{{ t.dealer_code if t and t.dealer_code else "Dealer Code" }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in txns %}
+                <tr>
+                  <td class="text-center">{{ row.id }}</td>
+                  <td class="fw-semibold">{{ row.user_code }}</td>
+                  <td>{{ row.item }}</td>
+                  <td class="fw-semibold">{{ row.quantity }}</td>
+                  <td>{{ row.txn_datetime }}</td>
+                  <td>{{ row.dealer_code }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

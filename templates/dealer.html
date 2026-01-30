@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Ration | Dealer Dashboard</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    body{ background:#f5f7fb; }
+    .sidebar{
+      width:260px; min-height:100vh;
+      background:#fff;
+      border-right:1px solid #e8ebf2;
+      position:sticky; top:0;
+    }
+    .sidebar .nav-link{
+      color:#344054; border-radius:10px;
+      padding:10px 12px; margin-bottom:6px;
+    }
+    .sidebar .nav-link.active, .sidebar .nav-link:hover{
+      background:#eef2ff; color:#1d4ed8;
+    }
+    .topbar{
+      background: linear-gradient(90deg, #1d4ed8, #2563eb);
+      color:white; border-radius:14px;
+    }
+    .card-soft{ border:1px solid #e8ebf2; border-radius:16px; }
+    .pill{ font-size:12px; padding:4px 10px; border-radius:999px; }
+    .stock-card{
+      border:1px solid #e8ebf2; border-radius:16px; background:#fff;
+      padding:16px;
+    }
+    .stock-icon{
+      width:44px;height:44px;border-radius:14px;
+      display:flex;align-items:center;justify-content:center;
+      background:#eef2ff;color:#1d4ed8;
+    }
+    .hidden{ display:none; }
+  </style>
+</head>
+
+<body>
+<div class="d-flex">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar p-3">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+        <i class="bi bi-shop"></i>
+      </div>
+      <div>
+        <div class="fw-bold">{{ dealer_name }}</div>
+        <div class="text-muted small">{{ dealer_code }}</div>
+      </div>
+    </div>
+
+    <nav class="nav flex-column">
+      <a class="nav-link active" href="#" onclick="showTab('stockTab'); return false;">
+        <i class="bi bi-box-seam me-2"></i>{{ t.stock_overview if t and t.stock_overview else "Stock Overview" }}
+      </a>
+      <a class="nav-link" href="#" onclick="showTab('updateTab'); return false;">
+        <i class="bi bi-pencil-square me-2"></i>{{ t.update_stock if t and t.update_stock else "Update Stock" }}
+      </a>
+      <a class="nav-link" href="#" onclick="showTab('complaintsTab'); return false;">
+        <i class="bi bi-chat-left-text me-2"></i>{{ t.complaints if t and t.complaints else "Complaints" }}
+      </a>
+
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-grow-1 p-4">
+
+    <!-- TOPBAR -->
+    <div class="topbar p-3 mb-4 d-flex align-items-center justify-content-between">
+      <div class="fw-semibold fs-5">
+        {{ t.e_ration_system if t and t.e_ration_system else "E-Ration System" }}
+        <span class="opacity-75">| {{ t.dealer_dashboard_functions if t and t.dealer_dashboard_functions else "Dealer Dashboard Functions" }}</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <span class="d-none d-md-inline">
+          {{ t.welcome if t and t.welcome else "Welcome" }} {{ dealer_name }}
+        </span>
+        <a href="{{ url_for('logout') }}" class="btn btn-light border">
+          <i class="bi bi-box-arrow-right me-1"></i> {{ t.logout if t and t.logout else "Logout" }}
+        </a>
+      </div>
+    </div>
+
+    <!-- STOCK OVERVIEW TAB -->
+    <div id="stockTab">
+      <div class="card card-soft p-3 mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="fw-bold fs-5">{{ t.stock_overview if t and t.stock_overview else "Stock Overview" }}</div>
+          <span class="pill bg-primary-subtle text-primary">{{ t.live_stock if t and t.live_stock else "Live Stock" }}</span>
+        </div>
+        <div class="text-muted small">{{ t.view_stock_availability if t and t.view_stock_availability else "View stock availability (Rice / Wheat / Sugar)" }}</div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="stock-card">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="fw-semibold">{{ t.rice if t and t.rice else "Rice" }}</div>
+              <div class="stock-icon"><i class="bi bi-bag-check"></i></div>
+            </div>
+            <div class="fs-2 fw-bold mt-2">{{ stock["Rice"] }} kg</div>
+            <div class="small text-muted">{{ t.current_stock if t and t.current_stock else "Current stock" }}</div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="stock-card">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="fw-semibold">{{ t.wheat if t and t.wheat else "Wheat" }}</div>
+              <div class="stock-icon"><i class="bi bi-basket"></i></div>
+            </div>
+            <div class="fs-2 fw-bold mt-2">{{ stock["Wheat"] }} kg</div>
+            <div class="small text-muted">{{ t.current_stock if t and t.current_stock else "Current stock" }}</div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="stock-card">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="fw-semibold">{{ t.sugar if t and t.sugar else "Sugar" }}</div>
+              <div class="stock-icon"><i class="bi bi-cup-straw"></i></div>
+            </div>
+            <div class="fs-2 fw-bold mt-2">{{ stock["Sugar"] }} kg</div>
+            <div class="small text-muted">{{ t.current_stock if t and t.current_stock else "Current stock" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPDATE STOCK TAB -->
+    <div id="updateTab" class="hidden">
+      <div class="card card-soft p-3 mb-3">
+        <div class="fw-bold fs-5">{{ t.update_stock_quantities if t and t.update_stock_quantities else "Update Stock Quantities" }}</div>
+        <div class="text-muted small">{{ t.select_item_set_qty if t and t.select_item_set_qty else "Select item and set new stock quantity (kg)" }}</div>
+      </div>
+
+      <div class="card card-soft p-3">
+        <form method="POST" action="{{ url_for('dealer_update_stock') }}" class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">{{ t.item if t and t.item else "Item" }}</label>
+            <select class="form-select" name="item" required>
+              <option value="Rice">{{ t.rice if t and t.rice else "Rice" }}</option>
+              <option value="Wheat">{{ t.wheat if t and t.wheat else "Wheat" }}</option>
+              <option value="Sugar">{{ t.sugar if t and t.sugar else "Sugar" }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">{{ t.new_quantity_kg if t and t.new_quantity_kg else "New Quantity (kg)" }}</label>
+            <input type="number" class="form-control" name="new_qty" min="0" required>
+          </div>
+
+          <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-primary w-100" type="submit">
+              <i class="bi bi-arrow-repeat me-1"></i> {{ t.update_stock if t and t.update_stock else "Update Stock" }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- COMPLAINTS TAB -->
+    <div id="complaintsTab" class="hidden">
+      <div class="card card-soft p-3 mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="fw-bold fs-5">{{ t.complaints if t and t.complaints else "Complaints" }}</div>
+          <span class="pill bg-warning-subtle text-warning">{{ t.pending_resolved if t and t.pending_resolved else "Pending / Resolved" }}</span>
+        </div>
+        <div class="text-muted small">{{ t.view_and_resolve if t and t.view_and_resolve else "View and resolve user complaints" }}</div>
+      </div>
+
+      <div class="card card-soft p-3">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead class="text-muted">
+              <tr>
+                <th>{{ t.id if t and t.id else "ID" }}</th>
+                <th>{{ t.user if t and t.user else "User" }}</th>
+                <th>{{ t.complaint if t and t.complaint else "Complaint" }}</th>
+                <th>{{ t.status if t and t.status else "Status" }}</th>
+                <th class="text-end">{{ t.action if t and t.action else "Action" }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in complaints %}
+              <tr>
+                <td>#{{ c.id }}</td>
+                <td>{{ c.user_code }}</td>
+                <td style="max-width:420px;">{{ c.complaint_text }}</td>
+                <td>
+                  {% if c.status == "Resolved" %}
+                    <span class="badge text-bg-success">{{ t.resolved if t and t.resolved else "Resolved" }}</span>
+                  {% else %}
+                    <span class="badge text-bg-warning">{{ t.pending if t and t.pending else "Pending" }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if c.status != "Resolved" %}
+                  <form method="POST" action="{{ url_for('dealer_resolve_complaint', cid=c.id) }}" style="display:inline;">
+                    <button class="btn btn-sm btn-success">
+                      <i class="bi bi-check2-circle me-1"></i> {{ t.mark_resolved if t and t.mark_resolved else "Mark Resolved" }}
+                    </button>
+                  </form>
+                  {% else %}
+                    <span class="text-muted small">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if complaints|length == 0 %}
+              <tr>
+                <td colspan="5" class="text-muted text-center">{{ t.no_complaints_assigned if t and t.no_complaints_assigned else "No complaints assigned to you" }}</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function showTab(tabId){
+    document.getElementById("stockTab").classList.add("hidden");
+    document.getElementById("updateTab").classList.add("hidden");
+    document.getElementById("complaintsTab").classList.add("hidden");
+
+    document.getElementById(tabId).classList.remove("hidden");
+
+    // sidebar active state
+    const links = document.querySelectorAll(".sidebar .nav-link");
+    links.forEach(a => a.classList.remove("active"));
+    if(tabId === "stockTab") links[0].classList.add("active");
+    if(tabId === "updateTab") links[1].classList.add("active");
+    if(tabId === "complaintsTab") links[2].classList.add("active");
+  }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

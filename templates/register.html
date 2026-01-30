@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Ration | Register</title>
+
+  <!-- ✅ keep your existing path exactly (NO changes) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- ✅ UI same + ✅ ONLY add right-side content (E-Ration) -->
+  <style>
+    :root{
+      --blue:#4a55f3;
+      --blue2:#3f49e6;
+      --text:#0f172a;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --shadow: 0 20px 60px rgba(2,6,23,.12);
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(rgba(74,85,243,.18) 1px, transparent 1px) 0 0/18px 18px,
+        linear-gradient(180deg,#fbfbff 0%, #f4f5ff 60%, #eef0ff 100%);
+    }
+
+    .auth-wrap.auth-center{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:34px 18px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .auth-wrap.auth-center::after{
+      content:"";
+      position:absolute;
+      left:0; right:0; bottom:0;
+      height:175px;
+      background:linear-gradient(90deg, rgba(74,85,243,.95), rgba(74,85,243,.80));
+      z-index:0;
+    }
+
+    .card{
+      width:min(1120px, 100%);
+      background:#fff;
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      z-index:1;
+
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      min-height:560px;
+    }
+
+    /* LEFT */
+    .left{
+      padding:44px 46px;
+      background:#fff;
+    }
+
+    /* RIGHT PANEL (same look, now with content) */
+    .right-panel{
+      position:relative;
+      padding:54px 52px;
+      color:#fff;
+      background:linear-gradient(135deg, var(--blue) 0%, #5562ff 55%, var(--blue2) 100%);
+    }
+
+    .right-panel::before{
+      content:"";
+      position:absolute;
+      inset:26px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.20);
+      background:rgba(255,255,255,.06);
+      pointer-events:none;
+    }
+
+    /* Badge */
+    .gov-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid rgba(148,163,184,.35);
+      border-radius:999px;
+      background:#fff;
+      color:#111827;
+      font-weight:700;
+      font-size:13px;
+      margin-bottom:18px;
+    }
+    .gov-dot{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--blue);
+      box-shadow:0 0 0 4px rgba(74,85,243,.18);
+      display:inline-block;
+    }
+
+    h2{
+      margin:10px 0 6px;
+      font-size:28px;
+      letter-spacing:-.02em;
+    }
+    p{
+      margin:0 0 22px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.55;
+    }
+
+    form.grid{
+      display:grid;
+      gap:16px;
+      margin-top:8px;
+      width:min(420px, 100%);
+    }
+
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+
+    .label{
+      font-size:12px;
+      font-weight:800;
+      color:#111827;
+      margin:0 0 6px;
+      display:flex;
+      align-items:baseline;
+      gap:8px;
+    }
+    .hint{
+      font-weight:700;
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    select, .input{
+      width:100%;
+      height:44px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      color:#0f172a;
+      font-size:14px;
+      outline:none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    select:focus, .input:focus{
+      border-color: rgba(74,85,243,.70);
+      box-shadow: 0 0 0 4px rgba(74,85,243,.14);
+    }
+    .input::placeholder{ color:#9aa4b2; }
+
+    .small{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .actions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:4px;
+      width:100%;
+    }
+
+    .btn{
+      border:none;
+      cursor:pointer;
+      height:44px;
+      width:100%;
+      border-radius:12px;
+      background:var(--blue);
+      color:#fff;
+      font-weight:900;
+      letter-spacing:.2px;
+      box-shadow:0 12px 22px rgba(74,85,243,.25);
+      transition: transform .06s ease, background .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover{
+      background:#404be9;
+      box-shadow:0 14px 26px rgba(74,85,243,.30);
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .pill{
+      display:flex;
+      gap:6px;
+      font-size:13px;
+      color:#111827;
+      padding:6px 2px;
+      border:none;
+      background:transparent;
+      align-items:center;
+    }
+    .link{
+      color:var(--blue);
+      text-decoration:none;
+      font-weight:900;
+    }
+    .link:hover{ text-decoration:underline; }
+
+    .hidden{ display:none !important; }
+
+    /* ✅ RIGHT content styles */
+    .rp-wrap{
+      position:relative; /* to be above ::before overlay */
+      z-index:1;
+      max-width:420px;
+    }
+    .rp-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:800;
+      font-size:12px;
+      margin-bottom:18px;
+    }
+    .rp-title{
+      font-size:44px;
+      line-height:1.08;
+      letter-spacing:-.02em;
+      margin:6px 0 14px;
+      font-weight:900;
+    }
+    .rp-desc{
+      color:rgba(255,255,255,.82);
+      font-size:14px;
+      line-height:1.65;
+      margin:0 0 22px;
+      max-width:420px;
+    }
+    .rp-list{
+      display:grid;
+      gap:14px;
+      margin-top:8px;
+    }
+    .rp-item{
+      display:grid;
+      grid-template-columns: 34px 1fr;
+      gap:12px;
+      align-items:flex-start;
+      padding:10px 10px;
+      border-radius:14px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .rp-check{
+      width:28px;height:28px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:900;
+      line-height:1;
+    }
+    .rp-item h4{
+      margin:0;
+      font-size:14px;
+      font-weight:900;
+      color:#fff;
+    }
+    .rp-item p{
+      margin:2px 0 0;
+      font-size:12.5px;
+      color:rgba(255,255,255,.80);
+      line-height:1.55;
+    }
+
+    @media (max-width: 920px){
+      .card{
+        grid-template-columns:1fr;
+        min-height:auto;
+      }
+      .right-panel{
+        display:none; /* hide right panel on mobile like before */
+      }
+      .left{
+        padding:34px 22px;
+      }
+      form.grid{ width:100%; }
+      .row2{ grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrap auth-center">
+
+  <section class="card">
+
+    <!-- ✅ LEFT (your same content + routes + fields) -->
+    <div class="left">
+      <div class="gov-badge">
+        <span class="gov-dot"></span>
+        Government E-Ration Portal
+      </div>
+
+      <h2>Registration</h2>
+      <p>Fill details based on your role.</p>
+
+      <form method="POST" class="grid" autocomplete="off">
+
+        <div class="row2">
+          <div>
+            <div class="label">Role <span class="hint">Choose module</span></div>
+            <select name="role" id="role" required onchange="toggleFields(); autoHint();">
+              <option value="">-- Select Role --</option>
+              <option value="user">User</option>
+              <option value="dealer">Dealer</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <div>
+            <div class="label">Roll Number <span class="hint" id="prefixHint">Example: US001</span></div>
+            <input class="input" type="text" name="code" id="code"
+                   placeholder="Enter roll number (US/DL/AD...)" required />
+            <div class="small" id="rollHelp">Prefix decides module.</div>
+          </div>
+        </div>
+
+        <!-- USER fields -->
+        <div id="userFields" class="hidden">
+          <div class="row2">
+            <div>
+              <div class="label">Username</div>
+              <input class="input" type="text" name="username" placeholder="Your name">
+            </div>
+            <div>
+              <div class="label">Email <span class="hint">optional</span></div>
+              <input class="input" type="email" name="email" placeholder="you@example.com">
+            </div>
+          </div>
+        </div>
+
+        <!-- DEALER fields -->
+        <div id="dealerFields" class="hidden">
+          <div class="row2">
+            <div>
+              <div class="label">Shop Name</div>
+              <input class="input" type="text" name="shop_name" placeholder="Ration shop name">
+            </div>
+            <div>
+              <div class="label">Area <span class="hint">optional</span></div>
+              <input class="input" type="text" name="area" placeholder="Eg: Chennai">
+            </div>
+          </div>
+        </div>
+
+        <!-- ADMIN fields -->
+        <div id="adminFields" class="hidden">
+          <div>
+            <div class="label">Admin Username</div>
+            <input class="input" type="text" name="admin_username" placeholder="Admin name">
+          </div>
+        </div>
+
+        <div>
+          <div class="label">Password <span class="hint">min 4+ chars</span></div>
+          <input class="input" type="password" name="password" placeholder="Create password" required>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="submit">Create Account</button>
+          <span class="pill">
+            Already have account?
+            <a class="link" href="{{ url_for('login') }}">Login</a>
+          </span>
+        </div>
+
+        <p class="small">
+          Note: Role and roll number prefix must match. Example: User must use <b>US...</b>
+        </p>
+
+      </form>
+    </div>
+
+    <!-- ✅ RIGHT (NEW CONTENT ONLY for E-Ration) -->
+    <aside class="right-panel" aria-hidden="false">
+      <div class="rp-wrap">
+        <div class="rp-pill">E-Ration Portal</div>
+
+        <div class="rp-title">
+          Smart <br>
+          Ration System<br>
+        
+        </div>
+
+        <p class="rp-desc">
+          Digitizing ration distribution to ensure every family receives their rightful quota
+          with speed, transparency, and better tracking.
+        </p>
+
+        <div class="rp-list">
+          <div class="rp-item">
+            <div class="rp-check">✓</div>
+            <div>
+              <h4>Role-Based Access</h4>
+              <p>Separate modules for Users, Dealers, and Admins with controlled permissions.</p>
+            </div>
+          </div>
+
+          <div class="rp-item">
+            <div class="rp-check">✓</div>
+            <div>
+              <h4>Instant Updates</h4>
+              <p>Real-time tracking of purchases, allocations, and stock movement.</p>
+            </div>
+          </div>
+
+          <div class="rp-item">
+            <div class="rp-check">✓</div>
+            <div>
+              <h4>Secure Verification</h4>
+              <p>Improved accountability with digital records and safer authentication.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </section>
+
+</div>
+
+<script>
+  function toggleFields(){
+    const role = document.getElementById("role").value;
+
+    document.getElementById("userFields").classList.add("hidden");
+    document.getElementById("dealerFields").classList.add("hidden");
+    document.getElementById("adminFields").classList.add("hidden");
+
+    if(role === "user") document.getElementById("userFields").classList.remove("hidden");
+    if(role === "dealer") document.getElementById("dealerFields").classList.remove("hidden");
+    if(role === "admin") document.getElementById("adminFields").classList.remove("hidden");
+  }
+
+  function autoHint(){
+    const role = document.getElementById("role").value;
+    const hint = document.getElementById("prefixHint");
+    const help = document.getElementById("rollHelp");
+
+    if(role === "user"){
+      hint.textContent = "Example: US001";
+      help.textContent = "User roll number must start with US (US001, US002...)";
+    } else if(role === "dealer"){
+      hint.textContent = "Example: DL001";
+      help.textContent = "Dealer roll number must start with DL (DL001, DL002...)";
+    } else if(role === "admin"){
+      hint.textContent = "Example: AD001";
+      help.textContent = "Admin roll number must start with AD (AD001, AD002...)";
+    } else {
+      hint.textContent = "Example: US001";
+      help.textContent = "Prefix decides module.";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    autoHint();
+    toggleFields();
+
+    const codeInput = document.getElementById("code");
+    codeInput.addEventListener("input", () => {
+      codeInput.value = codeInput.value.toUpperCase();
+    });
+  });
+</script>
+</body>
+</html>

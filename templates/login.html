@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Government E-Ration Login</title>
+
+  <!-- ✅ keep your font + your css path (NO changes) -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- ✅ UI ONLY: same design as registration page + ✅ right-side content added -->
+  <style>
+    :root{
+      --blue:#4a55f3;
+      --blue2:#3f49e6;
+      --text:#0f172a;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --shadow: 0 20px 60px rgba(2,6,23,.12);
+      --ring: 0 0 0 4px rgba(74,85,243,.14);
+      --font: "Poppins", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:var(--font);
+      color:var(--text);
+
+      /* dotted bg like template */
+      background:
+        radial-gradient(rgba(74,85,243,.18) 1px, transparent 1px) 0 0/18px 18px,
+        linear-gradient(180deg,#fbfbff 0%, #f4f5ff 60%, #eef0ff 100%);
+    }
+
+    .bg-wrapper{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:34px 18px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .bg-wrapper::after{
+      content:"";
+      position:absolute;
+      left:0; right:0; bottom:0;
+      height:175px;
+      background:linear-gradient(90deg, rgba(74,85,243,.95), rgba(74,85,243,.80));
+      z-index:0;
+    }
+
+    /* ✅ main split card */
+    .login-box{
+      width:min(1120px, 100%);
+      background:#fff;
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      z-index:1;
+
+      min-height:560px;
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+    }
+
+    /* left column */
+    .left{
+      padding:44px 46px;
+      background:#fff;
+    }
+
+    /* ✅ right column (blue) with content */
+    .right{
+      padding:54px 52px;
+      color:#fff;
+      background:linear-gradient(135deg, var(--blue) 0%, #5562ff 55%, var(--blue2) 100%);
+      position:relative;
+    }
+    .right::before{
+      content:"";
+      position:absolute;
+      inset:26px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.20);
+      background:rgba(255,255,255,.06);
+      pointer-events:none;
+    }
+
+    /* header badge */
+    .header{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid rgba(148,163,184,.35);
+      border-radius:999px;
+      background:#fff;
+      margin-bottom:18px;
+      width:fit-content;
+    }
+    .header h4{
+      margin:0;
+      font-size:13px;
+      font-weight:600;
+      color:#111827;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--blue);
+      box-shadow:0 0 0 4px rgba(74,85,243,.18);
+      display:inline-block;
+    }
+
+    h2{
+      margin:10px 0 6px;
+      font-size:28px;
+      letter-spacing:-.02em;
+    }
+    .subtitle{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.55;
+    }
+
+    /* form */
+    form{
+      display:grid;
+      gap:14px;
+      width:min(420px, 100%);
+      margin-top:10px;
+    }
+    label{
+      font-size:12px;
+      font-weight:700;
+      color:#111827;
+      margin-bottom:-8px;
+    }
+
+    input, select{
+      width:100%;
+      height:44px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      color:#0f172a;
+      font-size:14px;
+      outline:none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+      font-family:var(--font);
+    }
+    input:focus, select:focus{
+      border-color: rgba(74,85,243,.70);
+      box-shadow: var(--ring);
+    }
+    input::placeholder{ color:#9aa4b2; }
+
+    button{
+      border:none;
+      cursor:pointer;
+      height:44px;
+      width:100%;
+      border-radius:12px;
+      background:var(--blue);
+      color:#fff;
+      font-weight:700;
+      letter-spacing:.2px;
+      box-shadow:0 12px 22px rgba(74,85,243,.25);
+      transition: transform .06s ease, background .15s ease, box-shadow .15s ease;
+      font-family:var(--font);
+    }
+    button:hover{
+      background:#404be9;
+      box-shadow:0 14px 26px rgba(74,85,243,.30);
+    }
+    button:active{ transform: translateY(1px); }
+
+    .error-box{
+      background:#ffe6e6;
+      padding:10px 12px;
+      border-radius:12px;
+      margin:6px 0 2px;
+      color:#b30000;
+      font-weight:600;
+      border:1px solid rgba(179,0,0,.18);
+    }
+
+    /* ✅ right-side content styles (simple) */
+    .rp-wrap{ position:relative; z-index:1; max-width:420px; }
+    .rp-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:800;
+      font-size:12px;
+      margin-bottom:18px;
+    }
+    .rp-title{
+      font-size:42px;
+      line-height:1.10;
+      letter-spacing:-.02em;
+      margin:6px 0 14px;
+      font-weight:900;
+    }
+    .rp-desc{
+      color:rgba(255,255,255,.84);
+      font-size:14px;
+      line-height:1.65;
+      margin:0 0 22px;
+      max-width:420px;
+    }
+    .rp-list{ display:grid; gap:14px; margin-top:8px; }
+    .rp-item{
+      display:grid;
+      grid-template-columns: 34px 1fr;
+      gap:12px;
+      align-items:flex-start;
+      padding:10px 10px;
+      border-radius:14px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .rp-check{
+      width:28px;height:28px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:900;
+      line-height:1;
+    }
+    .rp-item h4{
+      margin:0;
+      font-size:14px;
+      font-weight:900;
+      color:#fff;
+    }
+    .rp-item p{
+      margin:2px 0 0;
+      font-size:12.5px;
+      color:rgba(255,255,255,.80);
+      line-height:1.55;
+    }
+
+    @media (max-width: 920px){
+      .login-box{ grid-template-columns:1fr; min-height:auto; }
+      .right{ display:none; }
+      .left{ padding:34px 22px; }
+      form{ width:100%; }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="bg-wrapper">
+  <div class="login-box">
+
+    <!-- ✅ LEFT (your same login content / routes / fields) -->
+    <div class="left">
+      <div class="header">
+        <span class="dot"></span>
+        <h4>Government E-Ration Portal</h4>
+      </div>
+
+      <h2>Login</h2>
+      <p class="subtitle">Access your account based on role</p>
+
+      {% if error %}
+        <div class="error-box">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="{{ url_for('login') }}">
+
+        <label>Username / Roll Number</label>
+        <input type="text"
+               name="username"
+               placeholder="Enter username / shop name / US001 / DL001 / AD001"
+               required>
+
+        <label>Password</label>
+        <input type="password"
+               name="password"
+               placeholder="Enter password"
+               required>
+
+        <label>{{ t.preferred_language if t and t.preferred_language else "Preferred Language" }}</label>
+        <select name="language" required>
+          <option value="en" {% if lang_code=='en' %}selected{% endif %}>English</option>
+          <option value="ml" {% if lang_code=='ml' %}selected{% endif %}>മലയാളം</option>
+        </select>
+
+        <button type="submit">Login</button>
+      </form>
+    </div>
+
+    <!-- ✅ RIGHT (NEW SIMPLE WELCOME CONTENT ONLY) -->
+    <aside class="right">
+      <div class="rp-wrap">
+        <div class="rp-pill">Welcome to E-Ration</div>
+
+        <div class="rp-title">
+          Secure &<br>
+          Easy Login
+        </div>
+
+        <p class="rp-desc">
+          Sign in to access your ration services. Users can view quota & purchases,
+          Dealers can update stock, and Admins can monitor transactions.
+        </p>
+
+        <div class="rp-list">
+          <div class="rp-item">
+            <div class="rp-check">✓</div>
+            <div>
+              <h4>Fast Access</h4>
+              <p>Login using your Roll Number (US / DL / AD) with correct role.</p>
+            </div>
+          </div>
+
+          <div class="rp-item">
+            <div class="rp-check">✓</div>
+            <div>
+              <h4>Preferred Language</h4>
+              <p>Choose English or മലയാളം for a better experience.</p>
+            </div>
+          </div>
+
+          <div class="rp-item">
+            <div class="rp-check">✓</div>
+            <div>
+              <h4>Transparent System</h4>
+              <p>Track stock and transactions with reliable digital records.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -79,7 +79,13 @@
 
       <a class="nav-link" href="{{ url_for('complaint') }}">
         <i class="bi bi-chat-left-text me-2"></i>{{ t.complaints if t and t.complaints else "Complaints" }}
+
       </a>
+      <!-- ✅ NEW: Slot Booking button (below Complaints) -->
+<a class="nav-link" href="{{ url_for('slots_list') }}">
+  <i class="bi bi-calendar-check me-2"></i> Slot Booking
+</a>
+
     </nav>
   </aside>
 

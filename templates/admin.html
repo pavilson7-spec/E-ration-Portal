@@ -162,6 +162,10 @@
         <i class="bi bi-box-seam me-2"></i>{{ t.stock_monitoring if t and t.stock_monitoring else "Stock Monitoring" }}
       </a>
 
+      <!-- ✅ ADDED ONLY THIS BUTTON -->
+      <a class="nav-link" href="{{ url_for('admin_slots') }}">
+        <i class="bi bi-calendar-check me-2"></i>{{ t.slot_management if t and t.slot_management else "Slot Management" }}
+      </a>
 
       <a href="{{ url_for('admin_transactions') }}" class="nav-link">
         <i class="bi bi-clock-history me-2"></i> {{ t.transaction_history if t and t.transaction_history else "Transaction History" }}

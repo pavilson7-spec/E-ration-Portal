@@ -1471,6 +1471,186 @@ def dealer_stock_update():
 
     return redirect(url_for("dealer_dashboard"))
 
+@app.route("/admin/slots", methods=["GET"])
+def admin_slots():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    db = get_db_connection()
+    cur = db.cursor(dictionary=True)
+    cur.execute("""
+      SELECT s.*,
+        (SELECT COUNT(*) FROM slot_bookings b
+         WHERE b.slot_id=s.id AND b.status='BOOKED') AS booked_count
+      FROM slots s
+      ORDER BY s.slot_date DESC, s.start_time DESC
+    """)
+    slots = cur.fetchall() or []
+
+    slot_ids = [s["id"] for s in slots]
+    bookings_by_slot = {sid: [] for sid in slot_ids}
+
+    if slot_ids:
+        placeholders = ",".join(["%s"] * len(slot_ids))
+        cur.execute(f"""
+          SELECT
+            b.id AS booking_id,
+            b.slot_id,
+            b.status,
+            b.created_at,
+            u.username AS user_name,
+            u.code AS user_code
+          FROM slot_bookings b
+          LEFT JOIN users u ON u.id = b.user_id
+          WHERE b.slot_id IN ({placeholders})
+          ORDER BY b.created_at DESC
+        """, slot_ids)
+        for row in cur.fetchall() or []:
+            # ensure JSON-serializable values
+            if row.get("created_at") is not None:
+                row["created_at"] = str(row["created_at"])
+            bookings_by_slot.setdefault(row["slot_id"], []).append(row)
+
+    for s in slots:
+        s["bookings"] = bookings_by_slot.get(s["id"], [])
+
+    cur.close(); db.close()
+    return render_template("admin_slots.html", slots=slots)
+
+@app.route("/admin/slots/create", methods=["POST"])
+def admin_slots_create():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    slot_date = request.form.get("slot_date")      # YYYY-MM-DD
+    start_time = request.form.get("start_time")    # HH:MM
+    end_time = request.form.get("end_time")        # HH:MM
+    max_bookings = int(request.form.get("max_bookings","1"))
+
+    if not slot_date or not start_time or not end_time or max_bookings <= 0:
+        return "Invalid input", 400
+
+    db = get_db_connection()
+    cur = db.cursor()
+    cur.execute("""
+      INSERT INTO slots (slot_date, start_time, end_time, max_bookings, is_active)
+      VALUES (%s,%s,%s,%s,1)
+    """, (slot_date, start_time, end_time, max_bookings))
+    db.commit()
+    cur.close(); db.close()
+    return redirect(url_for("admin_slots"))
+
+@app.route("/slots", methods=["GET"])
+def slots_list():
+    if session.get("role") != "user":
+        return redirect(url_for("login"))
+
+    db = get_db_connection()
+    cur = db.cursor(dictionary=True)
+    cur.execute("""
+      SELECT s.*,
+        (SELECT COUNT(*) FROM slot_bookings b
+         WHERE b.slot_id=s.id AND b.status='BOOKED') AS booked_count
+      FROM slots s
+      WHERE s.is_active=1 AND s.slot_date >= CURDATE()
+      ORDER BY s.slot_date, s.start_time
+    """)
+    slots = cur.fetchall() or []
+    cur.close(); db.close()
+    return render_template("user_slots.html", slots=slots)
+
+def _book_slot(slot_id):
+    if session.get("role") != "user":
+        return redirect(url_for("login"))
+
+    if not slot_id:
+        return "Invalid slot", 400
+
+    user_code = session.get("code")
+    if not user_code:
+        return redirect(url_for("login"))
+
+    db = get_db_connection()
+    cur = db.cursor(dictionary=True)
+
+    # find numeric user id for bookings
+    cur.execute("SELECT id FROM users WHERE code=%s LIMIT 1", (user_code,))
+    user_row = cur.fetchone()
+    if not user_row:
+        cur.close(); db.close()
+        return redirect(url_for("login"))
+    user_id = user_row["id"]
+
+    # capacity check
+    cur.execute("SELECT max_bookings, is_active, slot_date FROM slots WHERE id=%s", (slot_id,))
+    s = cur.fetchone()
+    if not s or s["is_active"] != 1:
+        cur.close(); db.close()
+        return "Slot not available", 400
+
+    cur.execute("""
+      SELECT COUNT(*) AS c FROM slot_bookings
+      WHERE slot_id=%s AND status='BOOKED'
+    """, (slot_id,))
+    booked = cur.fetchone()["c"]
+
+    if booked >= s["max_bookings"]:
+        cur.close(); db.close()
+        return "Slot full", 400
+
+    # book
+    try:
+        cur.execute("""
+          INSERT INTO slot_bookings (slot_id, user_id, status)
+          VALUES (%s,%s,'BOOKED')
+        """, (slot_id, user_id))
+        db.commit()
+    except Exception:
+        # already booked etc.
+        db.rollback()
+
+    cur.close(); db.close()
+    return redirect(url_for("slots_list"))
+
+@app.route("/slots/book", methods=["POST"], endpoint="slot_book")
+def slot_book():
+    slot_id = request.form.get("slot_id", type=int)
+    return _book_slot(slot_id)
+
+@app.route("/slots/book/<int:slot_id>", methods=["POST"])
+def slots_book(slot_id):
+    return _book_slot(slot_id)
+
+@app.route("/admin/slots/create", methods=["POST"])
+def admin_create_slot():
+    # insert slot logic
+    return redirect(url_for("admin_slots"))
+
+@app.route("/admin/slots/toggle/<int:slot_id>", methods=["POST"])
+def admin_toggle_slot(slot_id):
+    # change active/inactive
+    return redirect(url_for("admin_slots"))
+
+@app.route("/admin/slots/delete/<int:slot_id>", methods=["POST"])
+def admin_delete_slot(slot_id):
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    db = get_db_connection()
+    cur = db.cursor()
+    try:
+        # delete dependent bookings first to avoid FK issues
+        cur.execute("DELETE FROM slot_bookings WHERE slot_id=%s", (slot_id,))
+        cur.execute("DELETE FROM slots WHERE id=%s", (slot_id,))
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        cur.close()
+        db.close()
+    return redirect(url_for("admin_slots"))
+
+
 # -----------------------------
 # Logout
 # -----------------------------

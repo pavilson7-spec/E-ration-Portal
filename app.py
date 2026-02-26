@@ -1,11 +1,25 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+print("RUNNING FILE:", __file__)
+import os
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
+from google import genai
 
 app = Flask(__name__)
 app.secret_key = "change_this_to_a_strong_secret"
+
+# Load environment and configure Gemini client once
+load_dotenv()  # default .env
+chat_env = Path("chat.env")
+if chat_env.exists():
+    load_dotenv(chat_env)  # optional local dev keys
+
+GENAI_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GENAI_API_KEY")
+client = genai.Client(api_key=GENAI_API_KEY) if GENAI_API_KEY else None
 
 # -----------------------------
 # ✅ Preferred Language (EN / ML) - applies to ALL templates
@@ -662,6 +676,7 @@ def login():
                     keep_lang = session.get("lang", "en")
                     session.clear()
                     session["lang"] = keep_lang
+                    
 
                     session["role"] = "dealer"
                     session["code"] = dealer["code"]
@@ -819,9 +834,25 @@ def user_dashboard():
         shop_lng=shop_lng
     )
 
-# -----------------------------
-# Manage Family Members (USER)
-# -----------------------------
+# ✅ helper: card quota per member
+CARD_QUOTA = {
+    "APL": {"rice": 5, "wheat": 3, "sugar": 1},
+    "BPL": {"rice": 5, "wheat": 4, "sugar": 2},
+    "NPH": {"rice": 7, "wheat": 5, "sugar": 2},
+}
+
+def calc_quota(card_type: str, member_count: int):
+    ct = (card_type or "").upper()
+    if ct not in CARD_QUOTA:
+        return {"rice": 0, "wheat": 0, "sugar": 0}
+    q = CARD_QUOTA[ct]
+    return {
+        "rice": q["rice"] * member_count,
+        "wheat": q["wheat"] * member_count,
+        "sugar": q["sugar"] * member_count,
+    }
+
+
 @app.route("/manage-members", methods=["GET", "POST"])
 def manage_members():
     if session.get("role") != "user":
@@ -833,55 +864,244 @@ def manage_members():
     cur = db.cursor(dictionary=True)
 
     try:
+        # ✅ POST can be: add member OR card request
         if request.method == "POST":
-            name = request.form.get("name", "").strip()
-            relation = request.form.get("relation", "").strip()
-            age = request.form.get("age", "").strip()
+            action = (request.form.get("action") or "").strip().lower()
 
-            if name and relation and age.isdigit():
-                cur.execute(
-                    """
-                    INSERT INTO family_members (user_code, member_name, relation, age, status, delete_request)
-                    VALUES (%s, %s, %s, %s, 'Pending', 0)
-                    """,
-                    (user_code, name, relation, int(age))
-                )
-                db.commit()
+            # 1) ✅ user requests card type (APL/BPL/NPH)
+            if action == "request_card":
+                requested_card = (request.form.get("card_type") or "").strip().upper()
 
+                if requested_card in ("APL", "BPL", "NPH"):
+                    # prevent duplicate pending request
+                    cur.execute("""
+                        SELECT id FROM card_requests
+                        WHERE user_code=%s AND status='Pending'
+                        ORDER BY id DESC LIMIT 1
+                    """, (user_code,))
+                    pending = cur.fetchone()
+
+                    if not pending:
+                        cur.execute("""
+                            INSERT INTO card_requests (user_code, requested_card, status)
+                            VALUES (%s, %s, 'Pending')
+                        """, (user_code, requested_card))
+
+                        # optional: store status in users table
+                        cur.execute("""
+                            UPDATE users
+                            SET card_status='Pending'
+                            WHERE code=%s
+                            LIMIT 1
+                        """, (user_code,))
+                        db.commit()
+
+            # 2) ✅ add member (old logic same, only small safe add)
+            else:
+                name = request.form.get("name", "").strip()
+                relation = request.form.get("relation", "").strip()
+                age = request.form.get("age", "").strip()
+
+                if name and relation and age.isdigit():
+                    cur.execute(
+                        """
+                        INSERT INTO family_members (user_code, member_name, relation, age, status, delete_request)
+                        VALUES (%s, %s, %s, %s, 'Pending', 0)
+                        """,
+                        (user_code, name, relation, int(age))
+                    )
+                    db.commit()
+
+        # ✅ fetch members (existing)
         cur.execute(
             "SELECT id, member_name, relation, age, status, delete_request FROM family_members WHERE user_code=%s ORDER BY id DESC",
             (user_code,)
         )
         members = cur.fetchall() or []
 
+        # ✅ member count for quota: Approved members only (delete_request=0)
+        cur.execute("""
+            SELECT COUNT(*) AS cnt
+            FROM family_members
+            WHERE user_code=%s AND status='Approved' AND delete_request=0
+        """, (user_code,))
+        member_count = int((cur.fetchone() or {}).get("cnt", 0))
+
+        # ✅ user card info
+        cur.execute("""
+            SELECT card_type, card_status
+            FROM users
+            WHERE code=%s
+            LIMIT 1
+        """, (user_code,))
+        u = cur.fetchone() or {}
+        card_type = (u.get("card_type") or "").upper()
+        card_status = u.get("card_status") or "None"
+
+        # ✅ quota totals (show wherever you already show totals)
+        quota = calc_quota(card_type, member_count)
+
+        # ✅ latest card request status (for message display)
+        cur.execute("""
+            SELECT id, requested_card, status, admin_note, created_at
+            FROM card_requests
+            WHERE user_code=%s
+            ORDER BY id DESC
+            LIMIT 1
+        """, (user_code,))
+        last_req = cur.fetchone()
+
     finally:
         cur.close()
         db.close()
 
-    return render_template("manage_members.html", members=members)
+    return render_template(
+        "manage_members.html",
+        members=members,
+        member_count=member_count,
+        card_type=card_type,
+        card_status=card_status,
+        quota=quota,          # quota["rice"], quota["wheat"], quota["sugar"]
+        last_req=last_req
+    )
+    
+    return render_template(
+        "manage_members.html",
+        members=members,
+        member_count=member_count,
+        card_type=card_type,
+        card_status=card_status,
+        quota=quota,
+        last_req=last_req
+    )
 
-@app.route("/member/request-delete/<int:mid>", methods=["POST"])
+# ============================
+# ✅ ADD THIS NEW ROUTE BELOW
+# ============================
+@app.route("/members/request-delete/<int:mid>", methods=["POST"])
 def request_delete_member(mid):
     if session.get("role") != "user":
         return redirect(url_for("login"))
 
     user_code = session.get("code")
+    if not user_code:
+        return redirect(url_for("login"))
 
     db = get_db_connection()
-    cur = db.cursor()
+    cur = db.cursor(dictionary=True)
+
     try:
         cur.execute("""
-            UPDATE family_members
-            SET delete_request=1
-            WHERE id=%s AND user_code=%s AND status='Approved'
+            SELECT id
+            FROM family_members
+            WHERE id=%s AND user_code=%s
             LIMIT 1
         """, (mid, user_code))
-        db.commit()
+        row = cur.fetchone()
+
+        if row:
+            cur2 = db.cursor()
+            cur2.execute("""
+                UPDATE family_members
+                SET delete_request=1
+                WHERE id=%s AND user_code=%s
+                LIMIT 1
+            """, (mid, user_code))
+            db.commit()
+            cur2.close()
+
     finally:
         cur.close()
         db.close()
 
     return redirect(url_for("manage_members"))
+
+@app.route("/admin/card-requests", methods=["GET"])
+def admin_card_requests():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    db = get_db_connection()
+    cur = db.cursor(dictionary=True)
+    try:
+        # pending first
+        cur.execute("""
+            SELECT r.id, r.user_code, r.requested_card, r.status, r.admin_note, r.created_at,
+                   u.username AS user_name, u.email AS user_phone
+            FROM card_requests r
+            LEFT JOIN users u ON u.code = r.user_code
+            ORDER BY (r.status='Pending') DESC, r.created_at DESC
+        """)
+        requests_list = cur.fetchall() or []
+    finally:
+        cur.close()
+        db.close()
+
+    return render_template("admin_card_requests.html", requests_list=requests_list)
+@app.route("/admin/card-requests/<int:req_id>/action", methods=["POST"])
+def admin_card_request_action(req_id):
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    action = (request.form.get("action") or "").strip().lower()  # approve / reject
+    note = (request.form.get("note") or "").strip()
+
+    db = get_db_connection()
+    cur = db.cursor(dictionary=True)
+    try:
+        cur.execute("""
+            SELECT id, user_code, requested_card, status
+            FROM card_requests
+            WHERE id=%s
+            LIMIT 1
+        """, (req_id,))
+        req = cur.fetchone()
+
+        if not req:
+            return redirect(url_for("admin_card_requests"))
+
+        if req["status"] != "Pending":
+            return redirect(url_for("admin_card_requests"))
+
+        if action == "approve":
+            # mark request approved
+            cur.execute("""
+                UPDATE card_requests
+                SET status='Approved', admin_note=%s
+                WHERE id=%s
+                LIMIT 1
+            """, (note, req_id))
+
+            # apply card to user
+            cur.execute("""
+                UPDATE users
+                SET card_type=%s, card_status='Approved'
+                WHERE code=%s
+                LIMIT 1
+            """, (req["requested_card"], req["user_code"]))
+
+        elif action == "reject":
+            cur.execute("""
+                UPDATE card_requests
+                SET status='Rejected', admin_note=%s
+                WHERE id=%s
+                LIMIT 1
+            """, (note, req_id))
+
+            # optional: update user status
+            cur.execute("""
+                UPDATE users
+                SET card_status='Rejected'
+                WHERE code=%s
+                LIMIT 1
+            """, (req["user_code"],))
+
+        db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+    return redirect(url_for("admin_card_requests"))
 
 # -----------------------------
 # Dealer Dashboard
@@ -1621,6 +1841,35 @@ def slot_book():
 def slots_book(slot_id):
     return _book_slot(slot_id)
 
+@app.route("/slots/cancel/<int:booking_id>", methods=["POST"])
+def slot_cancel(booking_id):
+    if session.get("role") != "user":
+        return redirect(url_for("login"))
+
+    user_code = session.get("code")
+    if not user_code:
+        return redirect(url_for("login"))
+
+    db = get_db_connection()
+    cur = db.cursor(dictionary=True)
+
+    # ensure the booking belongs to the current user
+    cur.execute("SELECT id FROM users WHERE code=%s LIMIT 1", (user_code,))
+    user_row = cur.fetchone()
+    if not user_row:
+        cur.close(); db.close()
+        return redirect(url_for("login"))
+
+    cur.execute("""
+        UPDATE slot_bookings
+        SET status='CANCELLED'
+        WHERE id=%s AND user_id=%s AND status='BOOKED'
+    """, (booking_id, user_row["id"]))
+    db.commit()
+
+    cur.close(); db.close()
+    return redirect(url_for("slots_list"))
+
 @app.route("/admin/slots/create", methods=["POST"])
 def admin_create_slot():
     # insert slot logic
@@ -1650,7 +1899,193 @@ def admin_delete_slot(slot_id):
         db.close()
     return redirect(url_for("admin_slots"))
 
+# =========================
+# ✅ AI CHAT MODULE
+# =========================
+import re
+from flask import request, jsonify
 
+# Use existing global Gemini client safely
+CLIENT = globals().get("client", None)
+
+# =========================
+# ✅ Intent detection  (returns route_key strings)
+# =========================
+def detect_intent(text: str) -> str:
+    t = (text or "").lower()
+
+    # greetings / thanks / bye -> no navigation
+    if any(k in t for k in [
+        "hi", "hello", "hey", "thanks", "thank you", "bye",
+        "good morning", "good evening", "good afternoon",
+        "namaskaram", "namskaram", "hai", "haii",
+        "ഹായ്", "ഹലോ", "നമസ്കാരം", "നമസ്ക്കാരം", "നമസ്തേ", "നന്ദി"
+    ]):
+        return "none"
+
+    # complaint / problem / issue / report
+    if any(k in t for k in [
+        "complaint", "problem", "issue", "report", "raise ticket",
+        "not received", "missing", "fraud", "corruption", "shop problem",
+        "paraati", "parati", "പരാതി", "പ്രശ്നം", "റിപ്പോർട്ട്", "കുഴപ്പം"
+    ]):
+        return "complaint"
+
+    # slot / booking / time
+    if any(k in t for k in [
+        "slot", "book", "booking", "time", "schedule", "appointment", "pick up time"
+    ]):
+        return "slot_booking"
+
+    # members / family
+    if any(k in t for k in [
+        "member", "family", "add member", "delete member", "remove member",
+        "dependent", "dependant", "family member"
+    ]):
+        return "members"
+
+    # quota / balance / rice / wheat / sugar / available
+    if any(k in t for k in [
+        "quota", "balance", "rice", "wheat", "sugar", "items", "remaining",
+        "entitlement", "ration", "available",
+        "റേഷൻ", "ക്വോട്ട", "ബാലൻസ്", "ബാക്കി", "അരി", "ഗോതമ്പ്", "പഞ്ചസാര"
+    ]):
+        return "quota"
+
+    # history / transaction / previous
+    if any(k in t for k in [
+        "history", "transactions", "transaction", "previous", "past purchase",
+        "statement", "record", "ഇടപാട്", "ചരിത്രം", "റേഖകൾ"
+    ]):
+        return "history"
+
+    # nearest shop / location / map
+    if any(k in t for k in [
+        "nearest shop", "location", "map", "nearby", "where is shop",
+        "route", "distance", "nearest"
+    ]):
+        return "nearest_shop"
+
+    # default -> dashboard
+    return "dashboard"
+
+
+# =========================
+# ✅ Gemini AI reply  (falls back gracefully)
+# =========================
+def gemini_reply(user_text: str) -> str:
+    if CLIENT is None:
+        return None  # caller will use static fallback
+
+    prompt = f"""You are a helpful assistant for an E-Ration (Public Distribution System) web app.
+
+Rules:
+- Reply in English with simple, concise words (2-4 sentences max).
+- Only answer topics related to ration cards, quota/balance, eligibility,
+  complaints, transaction history, family members, slot booking, or nearest shop.
+- If the user asks something unrelated, politely redirect them to ration topics.
+- Do NOT fabricate personal quota numbers or account details.
+- NEVER say "Click here", "click the button", "tap here", or any similar
+  call-to-action phrases. Navigation buttons are handled separately by the UI.
+
+User message: {user_text}
+Assistant reply:"""
+
+    try:
+        resp = CLIENT.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        raw = (resp.text or "").strip()
+        if not raw:
+            return None
+        # Strip any accidental "Click here: ..." or "Click here to ..." patterns
+        raw = re.sub(
+            r"(?i)\bclick\s+here[\s:,\-]*(?:to\s+\w+)?\s*",
+            "",
+            raw
+        ).strip()
+        return raw or None
+    except Exception:
+        return None
+
+
+# =========================
+# ✅ Build action buttons
+# =========================
+_ACTION_LABELS = {
+    "dashboard":    "Open Dashboard",
+    "complaint":    "Raise a Complaint",
+    "members":      "Manage Members",
+    "quota":        "View Quota / Balance",
+    "history":      "View History",
+    "nearest_shop": "Find Nearest Shop",
+    "slot_booking": "Book a Slot",
+}
+
+_STATIC_REPLIES = {
+    "complaint":    "You can raise or track your complaint on the Complaint page.",
+    "members":      "Add or manage your family members on the Manage Members page.",
+    "quota":        "Check your rice, wheat, and sugar quota on the Quota page.",
+    "history":      "View your past ration collection records on the History page.",
+    "nearest_shop": "Find your nearest ration shop using the map on the Dashboard.",
+    "slot_booking": "Book a pickup slot for your ration on the Slot Booking page.",
+    "dashboard":    "Here is a quick overview of your ration account.",
+    "none":         "Hello! I'm your E-Ration assistant. Ask me about quota, complaints, slots, history, or members.",
+}
+
+def make_actions(route_key: str):
+    """Return 1-2 chip buttons for the given route_key."""
+    if route_key == "none":
+        return []
+    actions = [{"label": _ACTION_LABELS.get(route_key, "Open Dashboard"), "route_key": route_key}]
+    # Add a secondary 'Open Dashboard' only if primary is not dashboard
+    if route_key != "dashboard":
+        actions.append({"label": _ACTION_LABELS["dashboard"], "route_key": "dashboard"})
+    return actions
+
+
+# =========================
+# ✅ /chat  and  /chatbot (alias) endpoints
+# =========================
+_VALID_ROUTE_KEYS = {
+    "dashboard", "complaint", "members", "quota",
+    "history", "nearest_shop", "slot_booking", "none"
+}
+
+@app.post("/chat")
+def chat():
+    data = request.get_json(force=True) or {}
+    msg  = (data.get("message") or "").strip()
+
+    if not msg:
+        return jsonify({
+            "reply":     "Hi! Ask me about quota, complaints, slots, members, history, or your nearest shop.",
+            "route_key": "none",
+            "actions":   []
+        })
+
+    # 1) classify intent
+    route_key = detect_intent(msg)
+    if route_key not in _VALID_ROUTE_KEYS:
+        route_key = "dashboard"
+
+    # 2) get reply  (Gemini first, static fallback)
+    reply = gemini_reply(msg) or _STATIC_REPLIES.get(route_key, _STATIC_REPLIES["dashboard"])
+
+    # 3) build chip buttons
+    actions = make_actions(route_key)
+
+    return jsonify({
+        "reply":     reply,
+        "route_key": route_key,
+        "actions":   actions
+    })
+
+
+@app.route("/chatbot", methods=["POST"])
+def chatbot_alias():
+    return chat()
 # -----------------------------
 # Logout
 # -----------------------------
@@ -1659,5 +2094,6 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=False)

@@ -44,6 +44,277 @@
       overflow:hidden;
       background:#fff;
     }
+
+    /* =============================================
+       CHATBOT – Elegant modern support widget
+    ============================================= */
+
+    /* FAB button */
+    #cb-fab {
+      position: fixed;
+      right: 24px; bottom: 24px;
+      width: 58px; height: 58px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+      color: #fff;
+      font-size: 22px;
+      border: none;
+      box-shadow: 0 8px 28px rgba(29,78,216,.45);
+      cursor: pointer;
+      z-index: 9999;
+      transition: transform .2s ease, box-shadow .2s ease;
+      user-select: none;
+    }
+    #cb-fab::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid rgba(59,130,246,.3);
+      animation: cb-pulse 2s ease-out infinite;
+    }
+    #cb-fab:hover {
+      transform: translateY(-3px) scale(1.06);
+      box-shadow: 0 12px 32px rgba(29,78,216,.5);
+    }
+    @keyframes cb-pulse {
+      0%  { opacity:.9; transform:scale(.92); }
+      100%{ opacity:0;  transform:scale(1.3); }
+    }
+
+    /* Panel */
+    #cb-panel {
+      position: fixed;
+      right: 24px; bottom: 96px;
+      width: 350px; max-width: calc(100vw - 32px);
+      height: 480px;
+      border-radius: 20px;
+      background: #ffffff;
+      box-shadow: 0 20px 60px rgba(15,23,42,.2), 0 4px 16px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+      z-index: 9998;
+      overflow: hidden;
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(14px) scale(.97);
+      transition: opacity .25s ease, transform .25s ease, visibility 0s .25s;
+    }
+    #cb-panel.show {
+      visibility: visible;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      transition: opacity .25s ease, transform .25s ease;
+    }
+
+    /* Header */
+    .cb-header {
+      padding: 14px 16px 12px;
+      background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .cb-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cb-header-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.18);
+      display: grid; place-items: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .cb-header-text { margin-left: 10px; flex: 1; }
+    .cb-header-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .01em;
+    }
+    .cb-header-sub {
+      font-size: 11px;
+      opacity: .75;
+      margin-top: 1px;
+    }
+    .cb-status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 0 2px rgba(74,222,128,.35);
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    #cb-close {
+      background: rgba(255,255,255,.15);
+      border: none;
+      color: #fff;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      font-size: 13px;
+      cursor: pointer;
+      display: grid; place-items: center;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    #cb-close:hover { background: rgba(255,255,255,.3); }
+
+    /* Message area */
+    .cb-messages {
+      flex: 1;
+      padding: 14px 12px 8px;
+      overflow-y: auto;
+      background: #f8faff;
+      scroll-behavior: smooth;
+    }
+    .cb-messages::-webkit-scrollbar {
+      width: 4px;
+    }
+    .cb-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .cb-messages::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 99px;
+    }
+
+    /* Bubbles */
+    .cb-row {
+      display: flex;
+      margin-bottom: 2px;
+    }
+    .cb-row.user { justify-content: flex-end; }
+    .cb-row.bot  { justify-content: flex-start; }
+
+    .cb-bubble {
+      max-width: 80%;
+      padding: 9px 13px;
+      border-radius: 16px;
+      font-size: 13.5px;
+      line-height: 1.5;
+      word-break: break-word;
+      white-space: pre-wrap;
+      animation: cb-fadein .18s ease;
+    }
+    @keyframes cb-fadein {
+      from { opacity:0; transform: translateY(4px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .cb-bubble.user {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 3px 10px rgba(29,78,216,.25);
+    }
+    .cb-bubble.bot {
+      background: #fff;
+      color: #1e293b;
+      border: 1px solid #e2e8f0;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+
+    /* Typing indicator */
+    .cb-typing-dots {
+      display: flex;
+      gap: 4px;
+      padding: 8px 14px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+    .cb-typing-dots span {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #94a3b8;
+      animation: cb-bounce .9s ease-in-out infinite;
+    }
+    .cb-typing-dots span:nth-child(2) { animation-delay: .15s; }
+    .cb-typing-dots span:nth-child(3) { animation-delay: .30s; }
+    @keyframes cb-bounce {
+      0%,60%,100%{ transform:translateY(0); }
+      30%        { transform:translateY(-5px); }
+    }
+
+    /* Action chip buttons */
+    .cb-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+      padding-left: 2px;
+    }
+    .cb-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1.5px solid #1d4ed8;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, color .15s, transform .1s;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .cb-chip:hover {
+      background: #1d4ed8;
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .cb-chip i { font-size: 11px; }
+
+    /* Input bar */
+    .cb-input-bar {
+      padding: 10px 12px;
+      border-top: 1px solid #e8edf5;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #cb-input {
+      flex: 1;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1.5px solid #dde3ee;
+      outline: none;
+      font-size: 13.5px;
+      color: #1e293b;
+      background: #f8faff;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    #cb-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+      background: #fff;
+    }
+    #cb-send {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      display: grid; place-items: center;
+      transition: transform .15s, box-shadow .15s;
+      flex-shrink: 0;
+    }
+    #cb-send:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(29,78,216,.35);
+    }
+    #cb-send:active { transform: scale(.96); }
   </style>
 </head>
 
@@ -67,25 +338,21 @@
         <i class="bi bi-speedometer2 me-2"></i>{{ t.dashboard if t and t.dashboard else "Dashboard" }}
       </a>
 
-      <!-- ✅ FIXED: Manage Members -->
       <a class="nav-link" href="{{ url_for('manage_members') }}">
         <i class="bi bi-people me-2"></i>{{ t.manage_members if t and t.manage_members else "Manage Members" }}
       </a>
 
-      <!-- ✅ FIXED: Transaction History link -->
       <a class="nav-link" href="{{ url_for('user_transactions') }}">
         <i class="bi bi-receipt me-2"></i>{{ t.transaction_history if t and t.transaction_history else "Transaction History" }}
       </a>
 
       <a class="nav-link" href="{{ url_for('complaint') }}">
         <i class="bi bi-chat-left-text me-2"></i>{{ t.complaints if t and t.complaints else "Complaints" }}
-
       </a>
-      <!-- ✅ NEW: Slot Booking button (below Complaints) -->
-<a class="nav-link" href="{{ url_for('slots_list') }}">
-  <i class="bi bi-calendar-check me-2"></i> Slot Booking
-</a>
 
+      <a class="nav-link" href="{{ url_for('slots_list') }}">
+        <i class="bi bi-calendar-check me-2"></i> Slot Booking
+      </a>
     </nav>
   </aside>
 
@@ -173,7 +440,6 @@
         <div class="card card-soft p-3">
           <div class="d-flex align-items-center justify-content-between mb-2">
             <div class="fw-bold">{{ t.transaction_history if t and t.transaction_history else "Transaction History" }}</div>
-            <!-- ✅ FIXED: View All -->
             <a href="{{ url_for('user_transactions') }}" class="small text-decoration-none">{{ t.view_all if t and t.view_all else "View All" }}</a>
           </div>
 
@@ -288,6 +554,230 @@
   </main>
 </div>
 
+<!-- Chatbot FAB -->
+<button id="cb-fab" type="button" aria-label="Open E-Ration Assistant">
+  <i class="bi bi-chat-dots-fill"></i>
+</button>
+
+<!-- Chatbot Panel -->
+<div id="cb-panel" role="dialog" aria-modal="true" aria-label="E-Ration Assistant">
+
+  <!-- Header -->
+  <div class="cb-header">
+    <div class="cb-header-inner">
+      <div class="cb-header-avatar">🤖</div>
+      <div class="cb-header-text">
+        <div class="cb-header-title">E-Ration Assistant</div>
+        <div class="cb-header-sub">
+          <span class="cb-status-dot"></span>Online · Ask anything
+        </div>
+      </div>
+      <button id="cb-close" type="button" title="Close">✕</button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div id="cb-messages" class="cb-messages"></div>
+
+  <!-- Input -->
+  <div class="cb-input-bar">
+    <input id="cb-input" type="text" placeholder="Ask about quota, complaints, slots…" autocomplete="off"/>
+    <button id="cb-send" type="button" title="Send">
+      <i class="bi bi-send-fill"></i>
+    </button>
+  </div>
+
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Chatbot JS -->
+<script>
+(function () {
+  'use strict';
+
+  // ── Route map: route_key → URL path ──────────────────────────────────────
+  const ROUTE_MAP = {
+    dashboard:    "/user/dashboard",
+    complaint:    "/complaint",
+    members:      "/manage-members",
+    quota:        "/user/dashboard",   // quota shown on dashboard
+    history:      "/user/transactions",
+    nearest_shop: "/user/dashboard",   // map shown on dashboard
+    slot_booking: "/slots",
+    none:         null
+  };
+
+  // Icon map for chip buttons
+  const CHIP_ICONS = {
+    dashboard:    "bi-speedometer2",
+    complaint:    "bi-chat-left-text",
+    members:      "bi-people",
+    quota:        "bi-bag-check",
+    history:      "bi-receipt",
+    nearest_shop: "bi-geo-alt",
+    slot_booking: "bi-calendar-check",
+  };
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  const fab     = document.getElementById("cb-fab");
+  const panel   = document.getElementById("cb-panel");
+  const closeBtn= document.getElementById("cb-close");
+  const msgBox  = document.getElementById("cb-messages");
+  const input   = document.getElementById("cb-input");
+  const sendBtn = document.getElementById("cb-send");
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function scrollBottom() {
+    msgBox.scrollTo({ top: msgBox.scrollHeight, behavior: "smooth" });
+  }
+
+  function addRow(content, who) {
+    const row = document.createElement("div");
+    row.className = "cb-row " + who;
+    row.appendChild(content);
+    msgBox.appendChild(row);
+    scrollBottom();
+    return row;
+  }
+
+  function addBubble(text, who) {
+    const bbl = document.createElement("div");
+    bbl.className = "cb-bubble " + who;
+    bbl.textContent = text;
+    addRow(bbl, who);
+  }
+
+  function addActions(actions) {
+    if (!Array.isArray(actions) || actions.length === 0) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "cb-actions";
+
+    actions.forEach(function(btn) {
+      const rk   = (btn.route_key || "").trim();
+      const href = ROUTE_MAP[rk] !== undefined ? ROUTE_MAP[rk] : ROUTE_MAP.dashboard;
+      if (!href) return;   // route_key "none" → href is null → skip
+
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "cb-chip";
+
+      const icon = CHIP_ICONS[rk] || "bi-arrow-right-circle";
+      chip.innerHTML = `<i class="bi ${icon}"></i>${btn.label || rk}`;
+
+      chip.addEventListener("click", function() {
+        window.location.href = href;
+      });
+      wrap.appendChild(chip);
+    });
+
+    msgBox.appendChild(wrap);
+    scrollBottom();
+  }
+
+  // ── Typing animation ──────────────────────────────────────────────────────
+  function setTyping(show) {
+    const existing = document.getElementById("cb-typing");
+    if (show) {
+      if (!existing) {
+        const row = document.createElement("div");
+        row.className = "cb-row bot";
+        const dots = document.createElement("div");
+        dots.id = "cb-typing";
+        dots.className = "cb-typing-dots";
+        dots.innerHTML = "<span></span><span></span><span></span>";
+        row.appendChild(dots);
+        msgBox.appendChild(row);
+        scrollBottom();
+      }
+    } else {
+      if (existing) {
+        // remove the parent row too
+        const parent = existing.parentElement;
+        (parent && parent.classList.contains("cb-row") ? parent : existing).remove();
+      }
+    }
+  }
+
+  // ── Backend call ──────────────────────────────────────────────────────────
+  async function callBackend(message) {
+    const res  = await fetch("/chatbot", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ message })
+    });
+    const data = await res.json().catch(function() { return {}; });
+    if (!res.ok) throw new Error("status " + res.status);
+    return data;
+  }
+
+  async function sendToBot(message) {
+    setTyping(true);
+    try {
+      const data = await callBackend(message);
+      setTyping(false);
+
+      const reply     = (data && data.reply)   || "";
+      const routeKey  = (data && data.route_key) || "none";
+      const actions   = (data && Array.isArray(data.actions)) ? data.actions : [];
+
+      if (reply) addBubble(reply, "bot");
+      if (routeKey !== "none" && actions.length > 0) addActions(actions);
+      if (!reply && actions.length === 0) {
+        addBubble("I'm here to help! Ask about quota, history, slots, or complaints.", "bot");
+      }
+    } catch (err) {
+      setTyping(false);
+      addBubble("Something went wrong. Please try again.", "bot");
+    }
+  }
+
+  // ── Panel open / close ────────────────────────────────────────────────────
+  function openChat() {
+    panel.classList.add("show");
+    fab.setAttribute("aria-expanded", "true");
+    if (!panel.dataset.welcomed) {
+      panel.dataset.welcomed = "1";
+      sendToBot("hi");
+    }
+    setTimeout(function() { input.focus(); }, 60);
+  }
+
+  function closeChat() {
+    panel.classList.remove("show");
+    fab.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleChat() {
+    panel.classList.contains("show") ? closeChat() : openChat();
+  }
+
+  // ── Send message ──────────────────────────────────────────────────────────
+  function sendMessage() {
+    const text = (input.value || "").trim();
+    if (!text) return;
+    addBubble(text, "user");
+    input.value = "";
+    sendToBot(text);
+  }
+
+  // ── Events ────────────────────────────────────────────────────────────────
+  fab.addEventListener("click", toggleChat);
+  closeBtn.addEventListener("click", closeChat);
+  sendBtn.addEventListener("click", sendMessage);
+
+  input.addEventListener("keydown", function(e) {
+    if (e.key === "Enter")  { e.preventDefault(); sendMessage(); }
+    if (e.key === "Escape") { closeChat(); }
+  });
+
+  document.addEventListener("click", function(e) {
+    if (!panel.classList.contains("show")) return;
+    if (!panel.contains(e.target) && !fab.contains(e.target)) closeChat();
+  });
+
+})();
+</script>
 </body>
 </html>

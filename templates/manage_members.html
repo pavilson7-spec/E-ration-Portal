@@ -12,32 +12,49 @@
 
   <style>
     body{ background:#f5f7fb; }
-
-    /* Layout like Stock Monitoring */
     .sidebar{
-      width:260px; min-height:100vh;
+      width:260px;
+      min-height:100vh;
       background:#fff;
       border-right:1px solid #e8ebf2;
-      position:sticky; top:0;
+      position:sticky;
+      top:0;
+      padding:16px 14px;
     }
-    .brand{
-      background:#0d6efd;
-      color:#fff;
-      font-weight:700;
-      padding:14px 16px;
+    .userbox{
       display:flex;
       align-items:center;
       gap:10px;
+      padding:8px 10px;
+      margin-bottom:14px;
     }
-    .brand i{ font-size:18px; }
-    .nav-link{
-      color:#344054; border-radius:10px;
-      padding:10px 12px; margin-bottom:6px;
-      display:flex; align-items:center; gap:10px;
+    .avatar{
+      width:44px; height:44px;
+      border-radius:50%;
+      background:#2563eb;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
     }
-    .nav-link.active, .nav-link:hover{
-      background:#eef2ff; color:#1d4ed8;
+    .username{ font-weight:700; color:#101828; line-height:1.1; }
+    .userid{ font-size:12px; color:#667085; margin-top:2px; }
+    .nav-menu{ display:flex; flex-direction:column; }
+    .navlink{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      color:#344054;
+      text-decoration:none;
+      margin-bottom:6px;
+      transition:all .15s ease;
     }
+    .navlink i{ font-size:18px; }
+    .navlink:hover{ background:#eef2ff; color:#1d4ed8; }
+    .navlink.active{ background:#e8f1ff; color:#1d4ed8; font-weight:600; }
 
     .content-wrap{ padding:22px; width:100%; }
     .page-title{ font-weight:700; margin:0; }
@@ -74,36 +91,57 @@
       border-radius:10px;
       padding:8px 12px;
     }
+
+    .quota-chip{
+      border:1px solid #e8ebf2;
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+    }
+    .quota-chip .k{ color:#667085; font-size:12px; font-weight:700; }
+    .quota-chip .v{ font-size:18px; font-weight:900; color:#101828; }
   </style>
 </head>
 
 <body>
   <div class="d-flex">
 
-    <!-- Sidebar (like stock monitoring) -->
+    <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="brand">
-        <i class="bi bi-box-seam"></i>
-        <span>E-Ration User</span>
+      <div class="userbox">
+        <div class="avatar">{{ (session.get('name') or user_name or 'S')[0] | upper }}</div>
+        <div>
+          <div class="username">{{ session.get('name') or user_name or 'SHINE' }}</div>
+          <div class="userid">{{ session.get('code') or user_code or 'US123' }}</div>
+        </div>
       </div>
 
-      <div class="p-3">
-        <a class="nav-link" href="{{ url_for('user_dashboard') }}">
+      <div class="nav-menu">
+        <a class="navlink" href="{{ url_for('user_dashboard') }}">
           <i class="bi bi-speedometer2"></i>
           <span>Dashboard</span>
         </a>
-
-        <a class="nav-link active" href="#">
+        <a class="navlink active" href="{{ url_for('manage_members') }}">
           <i class="bi bi-people"></i>
           <span>Manage Members</span>
         </a>
-
-        <!-- No new routes added here (to avoid endpoint errors) -->
+        <a class="navlink" href="{{ url_for('user_transactions') }}">
+          <i class="bi bi-receipt"></i>
+          <span>Transaction History</span>
+        </a>
+        <a class="navlink" href="{{ url_for('complaint') }}">
+          <i class="bi bi-chat-left-text"></i>
+          <span>Complaints</span>
+        </a>
+        <a class="navlink" href="{{ url_for('slots_list') }}">
+          <i class="bi bi-calendar-check"></i>
+          <span>Slot Booking</span>
+        </a>
       </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="content-wrap">
+    <main class="flex-grow-1 p-4 content-wrap">
 
       <!-- Top header row -->
       <div class="d-flex align-items-start justify-content-between mb-3">
@@ -115,6 +153,95 @@
         <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-secondary btn-soft">
           <i class="bi bi-arrow-left me-1"></i> Back
         </a>
+      </div>
+
+      <!-- ✅ NEW: Card Type Request + Quota Summary (NO PATH ISSUE) -->
+      <div class="card-soft p-3 mb-3">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+          <div>
+            <div class="fw-bold"><i class="bi bi-credit-card-2-front me-2"></i>Ration Card Type</div>
+            <div class="small text-muted mt-1">
+              Select your card type (APL/BPL/NPH). Admin will approve or reject.
+            </div>
+
+            {% if last_req %}
+              {% if last_req.status == 'Pending' %}
+                <div class="mt-2">
+                  <span class="pill pill-warning">Request Pending</span>
+                  <span class="small text-muted ms-2">Requested: <b>{{ last_req.requested_card }}</b></span>
+                </div>
+              {% elif last_req.status == 'Approved' %}
+                <div class="mt-2">
+                  <span class="pill pill-success">Approved</span>
+                  <span class="small text-muted ms-2">Card: <b>{{ last_req.requested_card }}</b></span>
+                </div>
+              {% elif last_req.status == 'Rejected' %}
+                <div class="mt-2">
+                  <span class="pill pill-danger">Rejected</span>
+                  <span class="small text-muted ms-2">Requested: <b>{{ last_req.requested_card }}</b></span>
+                  {% if last_req.admin_note %}
+                    <div class="small text-muted mt-1">Admin note: {{ last_req.admin_note }}</div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% else %}
+              <div class="mt-2">
+                <span class="pill pill-gray">No Card Selected</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Request Form -->
+          <form method="POST" class="d-flex flex-wrap align-items-end gap-2">
+            <!-- ✅ this tells backend its card request -->
+            <input type="hidden" name="action" value="request_card">
+
+            <div>
+              <label class="form-label small text-muted mb-1">Select Card</label>
+              <select name="card_type" class="form-select" style="min-width:180px;" required>
+                <option value="" disabled selected>Choose</option>
+                <option value="APL">APL</option>
+                <option value="BPL">BPL</option>
+                <option value="NPH">NPH</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-soft">
+              <i class="bi bi-send me-1"></i> Send Request
+            </button>
+          </form>
+        </div>
+
+        <!-- Quota Summary -->
+        <hr class="my-3">
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <div class="small text-muted">
+            Approved Members Count: <b>{{ member_count or 0 }}</b>
+            {% if card_type %}
+              • Current Card: <b>{{ card_type }}</b>
+            {% endif %}
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <div class="quota-chip">
+              <div class="k">Rice Total</div>
+              <div class="v">{{ quota.rice if quota else 0 }} kg</div>
+            </div>
+            <div class="quota-chip">
+              <div class="k">Wheat Total</div>
+              <div class="v">{{ quota.wheat if quota else 0 }} kg</div>
+            </div>
+            <div class="quota-chip">
+              <div class="k">Sugar Total</div>
+              <div class="v">{{ quota.sugar if quota else 0 }} kg</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="small text-muted mt-2">
+          Quota is calculated as <b>(Approved Members × Per Member Quota)</b>.
+        </div>
       </div>
 
       <!-- Add Member Card -->

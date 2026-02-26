@@ -171,6 +171,9 @@
         <i class="bi bi-clock-history me-2"></i> {{ t.transaction_history if t and t.transaction_history else "Transaction History" }}
       </a>
     </nav>
+    <a class="nav-link" href="{{ url_for('admin_card_requests') }}">
+  <i class="bi bi-credit-card-2-front me-2"></i> Card Requests
+</a>
 
     <div class="mt-4">
       <a class="btn btn-primary w-100" href="{{ url_for('logout') }}">

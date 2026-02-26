@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Ration | Admin Card Requests</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    body{ background:#f5f7fb; }
+    .sidebar{
+      width:260px; min-height:100vh; background:#fff;
+      border-right:1px solid #e8ebf2;
+      position:sticky; top:0;
+      padding:14px 14px 18px;
+      display:flex; flex-direction:column;
+    }
+    .brandcard{
+      background:#0b63f6; color:#fff; border-radius:12px;
+      padding:12px 12px; font-weight:700; line-height:1.1;
+    }
+    .brandcard small{ display:block; font-weight:600; opacity:.9; margin-top:4px; }
+    .adminbox{ display:flex; align-items:center; gap:10px; padding:12px 8px; }
+    .adminicon{
+      width:34px; height:34px; border-radius:10px;
+      background:#e8f1ff; color:#0b63f6;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800;
+    }
+    .adminname{ font-weight:700; color:#101828; line-height:1.1; }
+    .adminrole{ font-size:12px; color:#667085; margin-top:2px; }
+    .divider{ border-top:1px solid #eef2f7; margin:6px 0 10px; }
+    .nav-menu{ display:flex; flex-direction:column; }
+    .navlink{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      color:#344054;
+      text-decoration:none;
+      margin-bottom:6px;
+    }
+    .navlink i{ font-size:18px; }
+    .navlink:hover{ background:#eef2ff; color:#0b63f6; }
+    .navlink.active{ background:#e8f1ff; color:#0b63f6; font-weight:700; }
+    .logoutwrap{ margin-top:auto; padding-top:10px; }
+    .logoutbtn{
+      width:100%; background:#0b63f6; color:#fff;
+      border:none; padding:10px 12px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      text-decoration:none; font-weight:700;
+    }
+    .logoutbtn:hover{ filter:brightness(.95); color:#fff; }
+
+    .cardx{
+      background:#fff;
+      border: 1px solid #e8ebf2;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(16,24,40,.04);
+    }
+    .topbar{
+      background:#0b5ed7;
+      color:#fff;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+    }
+    .pill{
+      padding:4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background:#f2f4f7;
+      color:#344054;
+    }
+    .pill.success{ background:#e7f8ef; color:#067647; }
+    .pill.warn{ background:#fff4e5; color:#b54708; }
+    .pill.danger{ background:#ffe4e8; color:#c01048; }
+    .table thead th{
+      font-size: 12px;
+      color:#667085;
+      font-weight: 800;
+      border-bottom: 1px solid #e8ebf2 !important;
+    }
+    .table td{
+      vertical-align: middle;
+      border-top: 1px solid #f2f4f7 !important;
+    }
+  </style>
+</head>
+
+<body>
+<div class="d-flex">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brandcard">
+      E-Ration System
+      <small>Admin Panel</small>
+    </div>
+
+    <div class="adminbox">
+      <div class="adminicon"><i class="bi bi-person-badge"></i></div>
+      <div>
+        <div class="adminname">{{ admin_name or "max" }}</div>
+        <div class="adminrole">{{ admin_role or "ADMIN" }}</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <nav class="nav-menu">
+      <a class="navlink" href="{{ url_for('admin_dashboard') }}">
+        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+      </a>
+      <a class="navlink" href="{{ url_for('admin_members') }}">
+        <i class="bi bi-people"></i><span>User Management</span>
+      </a>
+      <a class="navlink" href="{{ url_for('admin_stocks') }}">
+        <i class="bi bi-box-seam"></i><span>Stock Monitoring</span>
+      </a>
+      <a class="navlink" href="{{ url_for('admin_slots') }}">
+        <i class="bi bi-calendar-check"></i><span>Slot Management</span>
+      </a>
+      <a class="navlink" href="{{ url_for('admin_transactions') }}">
+        <i class="bi bi-receipt"></i><span>Transaction History</span>
+      </a>
+      <a class="navlink active" href="{{ url_for('admin_card_requests') }}">
+        <i class="bi bi-credit-card-2-front"></i><span>Card Requests</span>
+      </a>
+    </nav>
+
+    <div class="logoutwrap">
+      <a class="logoutbtn" href="{{ url_for('logout') }}">
+        <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-grow-1 p-3 p-lg-4">
+
+    <!-- Topbar -->
+    <div class="topbar mb-3">
+      <div class="fw-bold">E-Ration System | Admin</div>
+      <div class="small">Manage APL / BPL / NPH requests</div>
+    </div>
+
+    <div class="cardx p-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <div class="fw-bold">User Card Requests</div>
+          <div class="text-muted small">Approve or reject card type requests.</div>
+        </div>
+        <span class="pill warn">Total: {{ requests_list|length }}</span>
+      </div>
+
+      <div class="table-responsive mt-3">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User Code</th>
+              <th>Requested Card</th>
+              <th>Status</th>
+              <th>Admin Note</th>
+              <th>Date</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in requests_list %}
+            <tr>
+              <td class="fw-semibold">#{{ r.id }}</td>
+              <td>{{ r.user_code }}</td>
+              <td><span class="pill">{{ r.requested_card }}</span></td>
+              <td>
+                {% if r.status == 'Pending' %}
+                  <span class="pill warn">Pending</span>
+                {% elif r.status == 'Approved' %}
+                  <span class="pill success">Approved</span>
+                {% else %}
+                  <span class="pill danger">Rejected</span>
+                {% endif %}
+              </td>
+              <td class="text-muted">{{ r.admin_note or "-" }}</td>
+              <td class="text-muted small">{{ r.created_at }}</td>
+
+              <td class="text-end" style="min-width:280px;">
+                {% if r.status == 'Pending' %}
+                <form class="d-flex gap-2 justify-content-end" method="POST"
+                      action="{{ url_for('admin_card_request_action', req_id=r.id) }}">
+                  <input type="text" name="note" class="form-control form-control-sm"
+                         placeholder="Note (optional)" style="max-width:160px;">
+                  <button class="btn btn-sm btn-success" name="action" value="approve" type="submit">
+                    <i class="bi bi-check2-circle me-1"></i>Approve
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" name="action" value="reject" type="submit">
+                    <i class="bi bi-x-circle me-1"></i>Reject
+                  </button>
+                </form>
+                {% else %}
+                  <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% if requests_list|length == 0 %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle me-1"></i>No requests yet
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="text-center text-muted small mt-4">
+      © {{ (report_year or "") }} E-Ration System — Admin Panel
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

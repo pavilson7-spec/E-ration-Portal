@@ -12,24 +12,50 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
   <style>
-    body{ background:#f5f7fb; }
+    body { background:#f5f7fb; }
     .sidebar{
-      width:260px;
-      min-height:100vh;
-      background:#ffffff;
+      width:260px; min-height:100vh; background:#fff;
       border-right:1px solid #e8ebf2;
+      position:sticky; top:0;
+      padding:14px 14px 18px;
+      display:flex; flex-direction:column;
     }
-    .sidebar .nav-link{
-      color:#344054;
-      border-radius:10px;
+    .brandcard{
+      background:#0b63f6; color:#fff; border-radius:12px;
+      padding:12px 12px; font-weight:700; line-height:1.1;
+    }
+    .brandcard small{ display:block; font-weight:600; opacity:.9; margin-top:4px; }
+    .adminbox{ display:flex; align-items:center; gap:10px; padding:12px 8px; }
+    .adminicon{
+      width:34px; height:34px; border-radius:10px;
+      background:#e8f1ff; color:#0b63f6;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800;
+    }
+    .adminname{ font-weight:700; color:#101828; line-height:1.1; }
+    .adminrole{ font-size:12px; color:#667085; margin-top:2px; }
+    .divider{ border-top:1px solid #eef2f7; margin:6px 0 10px; }
+    .nav-menu{ display:flex; flex-direction:column; }
+    .navlink{
+      display:flex; align-items:center; gap:10px;
       padding:10px 12px;
+      border-radius:12px;
+      color:#344054;
+      text-decoration:none;
       margin-bottom:6px;
     }
-    .sidebar .nav-link.active,
-    .sidebar .nav-link:hover{
-      background:#eef2ff;
-      color:#1d4ed8;
+    .navlink i{ font-size:18px; }
+    .navlink:hover{ background:#eef2ff; color:#0b63f6; }
+    .navlink.active{ background:#e8f1ff; color:#0b63f6; font-weight:700; }
+    .logoutwrap{ margin-top:auto; padding-top:10px; }
+    .logoutbtn{
+      width:100%; background:#0b63f6; color:#fff;
+      border:none; padding:10px 12px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      text-decoration:none; font-weight:700;
     }
+    .logoutbtn:hover{ filter:brightness(.95); color:#fff; }
+
     .topbar{
       background: linear-gradient(90deg,#1d4ed8,#2563eb);
       color:white;
@@ -46,22 +72,48 @@
 <div class="d-flex">
 
   <!-- ===== SIDEBAR ===== -->
-  <aside class="sidebar p-3">
-    <h5 class="fw-bold mb-3">Admin Panel</h5>
+  <aside class="sidebar">
+    <div class="brandcard">
+      E-Ration System
+      <small>Admin Panel</small>
+    </div>
 
-    <nav class="nav flex-column">
-      <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
-        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+    <div class="adminbox">
+      <div class="adminicon"><i class="bi bi-person-badge"></i></div>
+      <div>
+        <div class="adminname">{{ admin_name or "max" }}</div>
+        <div class="adminrole">{{ admin_role or "ADMIN" }}</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <nav class="nav-menu">
+      <a class="navlink" href="{{ url_for('admin_dashboard') }}">
+        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
       </a>
-
-      <a class="nav-link active" href="{{ url_for('admin_slots') }}">
-        <i class="bi bi-calendar-check me-2"></i> Slot Management
+      <a class="navlink" href="{{ url_for('admin_members') }}">
+        <i class="bi bi-people"></i><span>User Management</span>
       </a>
-
-      <a class="nav-link" href="{{ url_for('logout') }}">
-        <i class="bi bi-box-arrow-right me-2"></i> Logout
+      <a class="navlink" href="{{ url_for('admin_stocks') }}">
+        <i class="bi bi-box-seam"></i><span>Stock Monitoring</span>
+      </a>
+      <a class="navlink active" href="{{ url_for('admin_slots') }}">
+        <i class="bi bi-calendar-check"></i><span>Slot Management</span>
+      </a>
+      <a class="navlink" href="{{ url_for('admin_transactions') }}">
+        <i class="bi bi-receipt"></i><span>Transaction History</span>
+      </a>
+      <a class="navlink" href="{{ url_for('admin_card_requests') }}">
+        <i class="bi bi-credit-card-2-front"></i><span>Card Requests</span>
       </a>
     </nav>
+
+    <div class="logoutwrap">
+      <a class="logoutbtn" href="{{ url_for('logout') }}">
+        <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+      </a>
+    </div>
   </aside>
 
   <!-- ===== MAIN CONTENT ===== -->

@@ -11,33 +11,49 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    body{ background:#f5f7fb; }
-
-    /* Sidebar like Stock Monitoring (white sidebar) */
+    body { background:#f5f7fb; }
     .sidebar{
-      width:260px; min-height:100vh;
-      background:#fff;
+      width:260px; min-height:100vh; background:#fff;
       border-right:1px solid #e8ebf2;
       position:sticky; top:0;
+      padding:14px 14px 18px;
+      display:flex; flex-direction:column;
     }
-    .brand{
-      background:#0d6efd;
-      color:#fff;
-      font-weight:700;
-      padding:14px 16px;
-      display:flex;
-      align-items:center;
-      gap:10px;
+    .brandcard{
+      background:#0b63f6; color:#fff; border-radius:12px;
+      padding:12px 12px; font-weight:700; line-height:1.1;
     }
-    .brand i{ font-size:18px; }
-    .nav-link{
-      color:#344054; border-radius:10px;
-      padding:10px 12px; margin-bottom:6px;
+    .brandcard small{ display:block; font-weight:600; opacity:.9; margin-top:4px; }
+    .adminbox{ display:flex; align-items:center; gap:10px; padding:12px 8px; }
+    .adminicon{
+      width:34px; height:34px; border-radius:10px;
+      background:#e8f1ff; color:#0b63f6;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800;
+    }
+    .adminname{ font-weight:700; color:#101828; line-height:1.1; }
+    .adminrole{ font-size:12px; color:#667085; margin-top:2px; }
+    .divider{ border-top:1px solid #eef2f7; margin:6px 0 10px; }
+    .nav-menu{ display:flex; flex-direction:column; }
+    .navlink{
       display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      color:#344054;
+      text-decoration:none;
+      margin-bottom:6px;
     }
-    .nav-link.active, .nav-link:hover{
-      background:#eef2ff; color:#1d4ed8;
+    .navlink i{ font-size:18px; }
+    .navlink:hover{ background:#eef2ff; color:#0b63f6; }
+    .navlink.active{ background:#e8f1ff; color:#0b63f6; font-weight:700; }
+    .logoutwrap{ margin-top:auto; padding-top:10px; }
+    .logoutbtn{
+      width:100%; background:#0b63f6; color:#fff;
+      border:none; padding:10px 12px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      text-decoration:none; font-weight:700;
     }
+    .logoutbtn:hover{ filter:brightness(.95); color:#fff; }
 
     .content-wrap{ padding:22px; width:100%; }
 
@@ -82,36 +98,57 @@
 
     <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="brand">
-        <i class="bi bi-person-badge"></i>
-        <span>{{ t.e_ration_admin if t and t.e_ration_admin else "E-Ration Admin" }}</span>
+      <div class="brandcard">
+        E-Ration System
+        <small>Admin Panel</small>
       </div>
 
-      <div class="p-3">
-        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+      <div class="adminbox">
+        <div class="adminicon"><i class="bi bi-person-badge"></i></div>
+        <div>
+          <div class="adminname">{{ admin_name or "max" }}</div>
+          <div class="adminrole">{{ admin_role or "ADMIN" }}</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <nav class="nav-menu">
+        <a class="navlink" href="{{ url_for('admin_dashboard') }}">
           <i class="bi bi-speedometer2"></i>
-          <span>{{ t.dashboard if t and t.dashboard else "Dashboard" }}</span>
+          <span>Dashboard</span>
         </a>
-
-        <a class="nav-link active" href="#">
+        <a class="navlink active" href="{{ url_for('admin_members') }}">
           <i class="bi bi-people"></i>
-          <span>{{ t.member_approval if t and t.member_approval else "Member Approval" }}</span>
+          <span>User Management</span>
         </a>
-
-        <a class="nav-link" href="{{ url_for('admin_stocks') }}">
+        <a class="navlink" href="{{ url_for('admin_stocks') }}">
           <i class="bi bi-box-seam"></i>
-          <span>{{ t.stock_monitoring if t and t.stock_monitoring else "Stock Monitoring" }}</span>
+          <span>Stock Monitoring</span>
         </a>
+        <a class="navlink" href="{{ url_for('admin_slots') }}">
+          <i class="bi bi-calendar-check"></i>
+          <span>Slot Management</span>
+        </a>
+        <a class="navlink" href="{{ url_for('admin_transactions') }}">
+          <i class="bi bi-receipt"></i>
+          <span>Transaction History</span>
+        </a>
+        <a class="navlink" href="{{ url_for('admin_card_requests') }}">
+          <i class="bi bi-credit-card-2-front"></i>
+          <span>Card Requests</span>
+        </a>
+      </nav>
 
-        <a class="nav-link" href="{{ url_for('logout') }}">
-          <i class="bi bi-box-arrow-right"></i>
-          <span>{{ t.logout if t and t.logout else "Logout" }}</span>
+      <div class="logoutwrap">
+        <a class="logoutbtn" href="{{ url_for('logout') }}">
+          <i class="bi bi-box-arrow-right"></i><span>{{ t.logout if t and t.logout else "Logout" }}</span>
         </a>
       </div>
     </aside>
 
     <!-- Main -->
-    <main class="content-wrap">
+    <main class="flex-grow-1 p-4 content-wrap">
 
       <!-- Header like Stock Monitoring -->
       <div class="d-flex align-items-start justify-content-between mb-3">
